@@ -28,14 +28,14 @@ Two tools offer a free preview of a public profile or company page:
 
 | Tool | What it does |
 |---|---|
-| `preview_profile` | Takes a `linkedin_url`, pulls up to about 50 recent posts, and returns a `preview_id` and a short summary. |
-| `preview_posting_insights` | Takes the `preview_id` and returns the breakdown by day, hour, format, and length. |
+| `preview_profile` | Takes a `linkedin_url`, pulls up to about 50 recent posts, and returns a `preview_id` and a short summary. Needs no account. |
+| `preview_posting_insights` | Takes the `preview_id` and returns the breakdown by day, hour, format, and length. Needs a free Flux account: your client asks you to sign in the first time. |
 
 Things to know:
 
 - Previews cover at most 50 posts and are pulled once per profile, so check `last_pull_at` to see how old the data is.
 - Hours and days are in UTC.
-- Usage limits apply, and some results may require a free Flux account.
+- Usage limits apply. A signed-in account can pull one new profile per day; profiles Flux already holds are free to look at.
 
 ## Connect it
 
