@@ -1,5 +1,5 @@
 {
-  "identifier": "flux-linkedin-mcp",
+  "identifier": "elegant-atomics-linkedin-mcp",
   "name": "Flux LinkedIn MCP",
   "version": "1.0.1",
   "description": "LinkedIn intelligence for AI agents: audit the posting patterns of any public LinkedIn profile or company page, research prospects and competitors, and on paid plans search post history, track trends, and explore the engagement graph. Hosted, read-only, no LinkedIn login or cookie.",
