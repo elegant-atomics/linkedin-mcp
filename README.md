@@ -8,6 +8,21 @@ https://www.fluxgraph.app/mcp
 
 This repository holds documentation and an agent skill. The server itself is hosted and closed source, so there is nothing to install or run.
 
+If your client needs a local command instead of a remote URL, the [`flux-linkedin-mcp`](https://www.npmjs.com/package/flux-linkedin-mcp) npm package wraps the hosted endpoint over stdio:
+
+```json
+{
+  "mcpServers": {
+    "flux-linkedin": {
+      "command": "npx",
+      "args": ["-y", "flux-linkedin-mcp"]
+    }
+  }
+}
+```
+
+The package source is in [`npm/`](npm/).
+
 ## What it does
 
 - **Audit posting patterns.** Find which days, hours, formats, and lengths beat an account's own baseline, with the sample size behind each finding.

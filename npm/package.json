@@ -1,0 +1,45 @@
+{
+  "name": "flux-linkedin-mcp",
+  "version": "0.1.0",
+  "description": "LinkedIn MCP server for Claude, Cursor, and other MCP clients: audit posting patterns and research any public LinkedIn profile or company page. Hosted by Flux, read-only, no LinkedIn login.",
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "linkedin",
+    "linkedin-mcp",
+    "linkedin-analytics",
+    "social-media",
+    "claude",
+    "cursor",
+    "ai-agents"
+  ],
+  "homepage": "https://www.fluxgraph.app/features/mcp",
+  "bugs": {
+    "url": "https://github.com/elegant-atomics/linkedin-mcp/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/elegant-atomics/linkedin-mcp.git",
+    "directory": "npm"
+  },
+  "license": "MIT",
+  "author": "Elegant Atomics (https://www.fluxgraph.app)",
+  "type": "module",
+  "bin": {
+    "flux-linkedin-mcp": "bin/flux-linkedin-mcp.js"
+  },
+  "files": [
+    "bin",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "mcp-remote": "^0.16.4"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
