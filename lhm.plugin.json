@@ -1,0 +1,2023 @@
+{
+  "identifier": "flux-linkedin-mcp",
+  "name": "Flux LinkedIn MCP",
+  "version": "1.0.1",
+  "description": "LinkedIn intelligence for AI agents: audit the posting patterns of any public LinkedIn profile or company page, research prospects and competitors, and on paid plans search post history, track trends, and explore the engagement graph. Hosted, read-only, no LinkedIn login or cookie.",
+  "author": "Elegant Atomics",
+  "authorUrl": "https://github.com/elegant-atomics",
+  "homepage": "https://www.fluxgraph.app/features/mcp",
+  "cloudEndpoint": "https://www.fluxgraph.app/mcp",
+  "icon": "https://www.fluxgraph.app/favicon.ico",
+  "tags": [
+    "linkedin",
+    "social-media",
+    "analytics",
+    "marketing",
+    "prospecting",
+    "competitor-research",
+    "remote"
+  ],
+  "tools": [
+    {
+      "name": "list_profiles",
+      "description": "List all tracked LinkedIn profiles for the authenticated user. Returns profile IDs needed by other tools.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "preview_profile",
+      "description": "Analyze a public LinkedIn profile or company page without a Flux account: pulls the latest ~50 posts (once per profile) and returns a teaser: post count, average engagement, the format that beats the baseline, the top post and the recent trend, plus a preview_id. The full breakdown (best day and hour, top and bottom posts with reasons, trends by format) and keyword search need a free Flux account: call preview_posting_insights or preview_search_posts with the preview_id, which asks the person to sign in where the client supports it, or give the person the continue_url if that call fails. Call claim_preview after sign-in only when the person says the profile is theirs.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "linkedin_url": {
+            "type": "string",
+            "description": "Public LinkedIn profile or company URL, e.g. https://www.linkedin.com/in/janedoe"
+          }
+        },
+        "required": [
+          "linkedin_url"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "preview_posting_insights",
+      "description": "Full breakdown for a previewed profile (from preview_profile): best day, hour, format and length, the top and bottom 5 posts with measured reasons, and engagement trend by format. Requires a free Flux account; calling it asks the person to sign in where the client supports it, otherwise use continue_url from preview_profile.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "preview_id": {
+            "type": "string",
+            "description": "preview_id returned by preview_profile"
+          }
+        },
+        "required": [
+          "preview_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "preview_search_posts",
+      "description": "Keyword search over the latest 50 posts of a previewed profile (from preview_profile). Case-insensitive substring match; returns matching posts ordered by engagement. Requires a free Flux account; calling it asks the person to sign in where the client supports it, otherwise use continue_url from preview_profile.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "preview_id": {
+            "type": "string",
+            "description": "preview_id returned by preview_profile"
+          },
+          "query": {
+            "type": "string",
+            "maxLength": 100,
+            "description": "Text to look for in the posts, 2 to 100 characters"
+          }
+        },
+        "required": [
+          "preview_id",
+          "query"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "claim_preview",
+      "description": "Make a profile from preview_profile your own Flux dashboard. Call this only when the person says the profile is theirs: the person cannot undo a claim. Requires sign-in; creates a free dashboard showing the latest 50 posts, one per account. Refuses if the account already has a dashboard; the breakdown tools still work then.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "preview_id": {
+            "type": "string",
+            "description": "preview_id returned by preview_profile"
+          }
+        },
+        "required": [
+          "preview_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_posts",
+      "description": "List a tracked profile's persisted posts with full metrics and text — query against the local post library, no LinkedIn pull, free. Use this when the caller already has a profile_id and wants to read its posts. Filter by date range, post type, minimum engagement, or text. Pass `scope` (a post_collections.id) to restrict to a specific collection (e.g. an external profile, topic stream, or hand-curated set). Paginated. For keyword/semantic search across posts, use `search_posts`. For fresh LinkedIn pulls, use `linkedin_profile_posts`.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "profile_id": {
+            "type": "string",
+            "description": "Tracked profile ID from list_profiles"
+          },
+          "scope": {
+            "type": "string",
+            "description": "Optional post_collections.id to filter posts to a specific collection"
+          },
+          "date_from": {
+            "type": "string",
+            "description": "Start date (ISO 8601, e.g. 2025-01-01)"
+          },
+          "date_to": {
+            "type": "string",
+            "description": "End date (ISO 8601)"
+          },
+          "post_type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "image",
+              "video",
+              "document",
+              "article",
+              "poll"
+            ],
+            "description": "Filter by post type"
+          },
+          "min_engagement": {
+            "type": "number",
+            "description": "Minimum total engagement"
+          },
+          "search": {
+            "type": "string",
+            "description": "Text search across post content (case-insensitive)"
+          },
+          "sort_by": {
+            "type": "string",
+            "enum": [
+              "total_engagement",
+              "likes",
+              "comments",
+              "shares",
+              "published_at",
+              "character_count"
+            ],
+            "default": "published_at",
+            "description": "Sort field"
+          },
+          "sort_dir": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "default": "desc",
+            "description": "Sort direction"
+          },
+          "page": {
+            "type": "number",
+            "default": 1,
+            "description": "Page number (1-based)"
+          },
+          "page_size": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 50,
+            "default": 25,
+            "description": "Results per page (max 50)"
+          }
+        },
+        "required": [
+          "profile_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_profile_summary",
+      "description": "Get KPI summary for a tracked profile: total posts, average engagement (broken down by likes/comments/shares/conversation rate), posts per week, engagement trend, top format, and posting goal status.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "profile_id": {
+            "type": "string",
+            "description": "Tracked profile ID from list_profiles"
+          }
+        },
+        "required": [
+          "profile_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_posting_insights",
+      "description": "Get optimal posting patterns for a profile: best day of week, best hour, format performance breakdown, and character length sweet spot. Includes full metric breakdown (likes, comments, shares, conversation rate) for every bucket. All metrics relative to the user's own baseline. Pass `scope` (a post_collections.id) to recompute the patterns against a specific collection.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "profile_id": {
+            "type": "string",
+            "description": "Tracked profile ID from list_profiles"
+          },
+          "scope": {
+            "type": "string",
+            "description": "Optional post_collections.id to scope the analysis"
+          },
+          "date_from": {
+            "type": "string",
+            "description": "Start date (ISO 8601)"
+          },
+          "date_to": {
+            "type": "string",
+            "description": "End date (ISO 8601)"
+          }
+        },
+        "required": [
+          "profile_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_topic_insights",
+      "description": "Surface the most-frequent topics in a profile's posts, with engagement context. Returns top N unigrams and (optionally) top N bigrams ranked by post count, each with avg_engagement, vs_baseline, and a sample_post_url. Mirrors the dashboard topics chart, server-side. Pass `scope` (a post_collections.id) to scope the analysis to a collection.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "profile_id": {
+            "type": "string",
+            "description": "Tracked profile ID from list_profiles"
+          },
+          "n": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "Max terms per list (default 15)"
+          },
+          "bigrams": {
+            "type": "boolean",
+            "description": "Also compute and return top bigrams (default true)"
+          },
+          "scope": {
+            "type": "string",
+            "description": "Optional post_collections.id to scope the analysis"
+          },
+          "date_from": {
+            "type": "string",
+            "description": "Start date (ISO 8601)"
+          },
+          "date_to": {
+            "type": "string",
+            "description": "End date (ISO 8601)"
+          }
+        },
+        "required": [
+          "profile_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_engagement_trends",
+      "description": "Get engagement time series for a profile with gap-filled buckets, rolling averages, and trend direction. Each bucket includes avg engagement, likes, comments, shares, and conversation rate. Useful for understanding whether engagement is growing or declining. Pass `scope` (a post_collections.id) to plot trends for a specific collection.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "profile_id": {
+            "type": "string",
+            "description": "Tracked profile ID from list_profiles"
+          },
+          "scope": {
+            "type": "string",
+            "description": "Optional post_collections.id to scope the time series"
+          },
+          "granularity": {
+            "type": "string",
+            "enum": [
+              "daily",
+              "weekly",
+              "monthly"
+            ],
+            "default": "weekly",
+            "description": "Time bucket granularity"
+          },
+          "date_from": {
+            "type": "string",
+            "description": "Start date (ISO 8601)"
+          },
+          "date_to": {
+            "type": "string",
+            "description": "End date (ISO 8601)"
+          },
+          "rolling_window": {
+            "type": "number",
+            "minimum": 2,
+            "maximum": 30,
+            "description": "Rolling average window size in buckets (default: 4 for weekly, 7 for daily, 3 for monthly)"
+          }
+        },
+        "required": [
+          "profile_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "search_posts",
+      "description": "Keyword + semantic search over persisted posts in the local library — full-text + pgvector cosine, no LinkedIn pull, free. Use this when the caller has a query string and wants ranked persisted-post results. Pass `scope` (a post_collections.id) to limit to a specific collection. For fresh LinkedIn keyword pulls, use `linkedin_post_search` instead (5 credits).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "profile_id": {
+            "type": "string",
+            "description": "Tracked profile ID from list_profiles"
+          },
+          "query": {
+            "type": "string",
+            "description": "Search query (e.g. 'cybersecurity tips', 'leadership')"
+          },
+          "scope": {
+            "type": "string",
+            "description": "Optional post_collections.id to restrict results to a collection"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "hybrid",
+              "keyword",
+              "semantic"
+            ],
+            "default": "hybrid",
+            "description": "Search mode: hybrid (keyword + semantic), keyword (FTS only), or semantic (embedding similarity only)"
+          },
+          "limit": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 50,
+            "default": 20,
+            "description": "Max results to return"
+          }
+        },
+        "required": [
+          "profile_id",
+          "query"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_credit_balance",
+      "description": "Return the authenticated user's current credit balance, this period's monthly allocation, and credits used since the period started. Free.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "get_usage_history",
+      "description": "Return recent credit_ledger transactions for the authenticated user. Filter by tool name, reason, or date range. Paginated. Free.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tool_name": {
+            "type": "string",
+            "description": "Filter to a specific MCP tool"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "monthly_grant",
+              "pack_purchase",
+              "tool_usage",
+              "refund",
+              "adjustment"
+            ],
+            "description": "Filter by ledger reason"
+          },
+          "date_from": {
+            "type": "string",
+            "description": "Start date (ISO 8601)"
+          },
+          "date_to": {
+            "type": "string",
+            "description": "End date (ISO 8601)"
+          },
+          "limit": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 200,
+            "default": 50,
+            "description": "Max rows to return"
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_cost_estimate",
+      "description": "Given an MCP tool name, return its credit cost so you can preview an action before running it. Also accepts a stream type (external_profile, company, topic, person_interests, hiring_signals, ad_watch) to preview the per-page cost create_stream / run_stream_now will charge. Returns { tool_name, cost, balance, sufficient, stream_cost? }. Tools not in the registry are assumed to cost 0. Free.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tool_name": {
+            "type": "string",
+            "description": "MCP tool name (e.g. 'get_posts') or stream type (e.g. 'external_profile')"
+          },
+          "params": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Reserved for future per-call estimation"
+          }
+        },
+        "required": [
+          "tool_name"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "create_stream",
+      "description": "Create a new research stream (external profile, company, topic, person interests, hiring signals, or ad watch). Running the stream on its schedule costs credits (see get_cost_estimate for the per-type cost). own_profile streams are not created here — they come from subscription checkout.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "external_profile",
+              "company",
+              "topic",
+              "person_interests",
+              "hiring_signals",
+              "ad_watch"
+            ],
+            "description": "Stream type"
+          },
+          "name": {
+            "type": "string",
+            "description": "User-facing label for this stream"
+          },
+          "source_url": {
+            "type": "string",
+            "description": "LinkedIn URL for external_profile / company / person_interests streams"
+          },
+          "params": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Type-specific config: topic uses {query, authorsIndustryId?, contentType?, postedLimit?, sortBy?}; hiring_signals/ad_watch use {company?, keywords?, ...}"
+          },
+          "schedule": {
+            "type": "string",
+            "enum": [
+              "once",
+              "daily",
+              "weekly",
+              "monthly",
+              "manual"
+            ],
+            "description": "Run schedule. Defaults to 'weekly'. 'monthly' runs every 30 days — the cheapest recurring cadence, and the usual choice for client profiles reported on monthly."
+          },
+          "initial_max_pages": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "description": "Opt-in deep first-run for external_profile, company and person_interests streams (1-5, default 1). A budget, not a price — you are billed for pages actually walked. A page is ~50 posts for profile/company feeds and ~100 engagement events for person_interests. Other stream types ignore this. Later scheduled runs pull one page in the steady state; a person_interests stream may walk further to close a gap after a missed tick, and is billed only for what it walks."
+          },
+          "history_days": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 366,
+            "description": "How far back the first run should reach, in days. Bounds the walk by TIME where initial_max_pages bounds it by COST — the run stops at whichever limit it hits first, so pair a window with enough pages to reach it. Honoured for external_profile, company and person_interests; the search types ignore it. Applies to this pull alone and is never saved on the stream, so scheduled runs keep topping up from where the last one stopped rather than re-fetching the window."
+          }
+        },
+        "required": [
+          "type",
+          "name"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "list_streams",
+      "description": "List all research streams for the authenticated user (external profiles, companies, topics, person interests, hiring signals, ad watches, and own_profile). Pass `type` to filter. Replaces list_profiles for the streams-first world, but list_profiles continues to work for V1-compatible callers.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "own_profile",
+              "external_profile",
+              "company",
+              "topic",
+              "person_interests",
+              "hiring_signals",
+              "ad_watch"
+            ],
+            "description": "Filter by stream type"
+          },
+          "include_inactive": {
+            "type": "boolean",
+            "default": false,
+            "description": "Include paused streams (active = false)"
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_stream_feed",
+      "description": "Return the most recent posts a stream has collected into the library, newest first by published_at. Use this to browse what a topic / external profile / person_interests / company stream has surfaced on its schedule.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "stream_id": {
+            "type": "string",
+            "description": "Stream ID from list_streams"
+          },
+          "limit": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 50,
+            "default": 20,
+            "description": "Max posts to return"
+          }
+        },
+        "required": [
+          "stream_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "pause_stream",
+      "description": "Pause a stream so it stops running on its cron schedule. Existing posts remain in the library. Use resume_stream to re-enable it. own_profile streams are billing-managed and cannot be paused here.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "stream_id": {
+            "type": "string",
+            "description": "Stream ID from list_streams"
+          }
+        },
+        "required": [
+          "stream_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "resume_stream",
+      "description": "Resume a paused stream. Sets active=true and queues it to run on the next cron tick by clearing next_run_at. own_profile streams are billing-managed and cannot be resumed here.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "stream_id": {
+            "type": "string",
+            "description": "Stream ID from list_streams"
+          }
+        },
+        "required": [
+          "stream_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "delete_stream",
+      "description": "Delete a stream and its stream_runs. Posts collected by the stream stay in your library (stream_id is set to NULL via ON DELETE SET NULL) so historical data isn't lost. Auto-collection is deleted with the stream. own_profile streams cannot be deleted through this tool; the own profile is managed from Settings and billing.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "stream_id": {
+            "type": "string",
+            "description": "Stream ID from list_streams"
+          }
+        },
+        "required": [
+          "stream_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "run_stream_now",
+      "description": "Trigger an immediate run of an active stream, bypassing its schedule. The run is fire-and-forget — the response confirms the dispatch but post collection happens asynchronously. Credits are charged for pages actually walked, not pages requested: one page is taken upfront and the rest settled when the run finishes, so a run that stops early (or fails) costs less than max_pages implies. Paused streams must be resumed first. Use list_streams or get_stream_feed to see results once the run completes.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "stream_id": {
+            "type": "string",
+            "description": "Stream ID from list_streams"
+          },
+          "max_pages": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "description": "Upper bound on pages for this run (1-5, default 1) — a budget, not a price. Honoured for external_profile, company and person_interests. You are billed only for pages actually walked; a person_interests stream stops as soon as it reaches engagement it already has, so a deep budget usually costs one page. A page is ~50 posts for profile/company feeds and ~100 engagement events for person_interests, where one page means one reactions call plus one comments call. Other stream types ignore this — their sources aren't paginated."
+          },
+          "resume": {
+            "type": "boolean",
+            "description": "Continue a person_interests backfill from where the deepest previous run stopped, instead of re-walking the newest pages. Use this for 'pull more history' — without it you re-fetch and re-pay for content you already have. No effect on a stream that has never been walked."
+          },
+          "history_days": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 366,
+            "description": "How far back this run should reach, in days. Bounds the walk by TIME where max_pages bounds it by COST — it stops at whichever limit it hits first, so pair a deep window with enough pages to reach it. Honoured for external_profile, company and person_interests; the search types ignore it. Applies to this run alone; it is never saved on the stream. Combines with resume: 'go further back, but only as far as this'."
+          }
+        },
+        "required": [
+          "stream_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "linkedin_profile_info",
+      "description": "Fetch a LinkedIn person profile (headline, current role, work history, education, location). Costs 5 credits per call. Results are upserted into `people` (structured fields) and `linkedin_profiles` (so profile-brief renders) — same enrichment side-effect as the other linkedin_profile_* tools.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "linkedin_url": {
+            "type": "string",
+            "description": "LinkedIn profile URL (e.g. https://www.linkedin.com/in/username)"
+          },
+          "refresh": {
+            "type": "boolean",
+            "description": "Bypass the cache and fetch a fresh copy from LinkedIn (costs 5 credits). Default false: a previously-fetched result is returned free, with how long ago it was retrieved."
+          }
+        },
+        "required": [
+          "linkedin_url"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "linkedin_profile_posts",
+      "description": "Fetch recent posts from a LinkedIn person profile. 5 credits per page of 50, up to 250 posts, charged only for pages actually fetched. Results are stored in the post library (source_type='external') and linked to a linkedin_profiles row so profile-brief can render research-only prospects.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "linkedin_url": {
+            "type": "string",
+            "description": "LinkedIn profile URL (e.g. https://www.linkedin.com/in/username)"
+          },
+          "max_posts": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 250,
+            "default": 50,
+            "description": "Maximum posts to return (1-250). 5 credits per page of 50, charged only for pages actually fetched."
+          },
+          "refresh": {
+            "type": "boolean",
+            "description": "Bypass the cache and re-fetch from LinkedIn (5 credits per page of 50, charged only for pages actually fetched). Default false: a previously-fetched result is returned free, with how long ago it was retrieved."
+          }
+        },
+        "required": [
+          "linkedin_url"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "linkedin_company_posts",
+      "description": "Fetch recent posts from a LinkedIn company page. 5 credits per page of 50, up to 250 posts, charged only for pages actually fetched. Results are stored in the post library (source_type='external') and linked to a linkedin_profiles row (profile_type='company').",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "linkedin_url": {
+            "type": "string",
+            "description": "LinkedIn company URL (e.g. https://www.linkedin.com/company/acme)"
+          },
+          "max_posts": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 250,
+            "default": 50,
+            "description": "Maximum posts to return (1-250). 5 credits per page of 50, charged only for pages actually fetched."
+          },
+          "refresh": {
+            "type": "boolean",
+            "description": "Bypass the cache and re-fetch from LinkedIn (5 credits per page of 50, charged only for pages actually fetched). Default false: a previously-fetched result is returned free, with how long ago it was retrieved."
+          }
+        },
+        "required": [
+          "linkedin_url"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "linkedin_post_search",
+      "description": "Search LinkedIn posts by keyword. Costs 5 credits per call. Returns a single page of matching posts.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Search query / keywords"
+          },
+          "filters": {
+            "type": "object",
+            "properties": {
+              "authorsIndustryId": {
+                "type": "string",
+                "description": "LinkedIn industry ID to filter authors"
+              },
+              "contentType": {
+                "type": "string",
+                "description": "Content type filter (e.g. video, article)"
+              },
+              "postedLimit": {
+                "type": "string",
+                "description": "Recency filter. Supported values: '24h', 'week', 'month'"
+              },
+              "sortBy": {
+                "type": "string",
+                "description": "Sort order (e.g. relevance, date)"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Optional filters"
+          },
+          "refresh": {
+            "type": "boolean",
+            "description": "Bypass the cache and re-run the search live (costs 5 credits). Default false: a previously-fetched result is returned free, with how long ago it was retrieved."
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "linkedin_profile_reactions",
+      "description": "Fetch the recent posts a LinkedIn person has reacted to. Useful for inferring interests. Costs 5 credits per call.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "linkedin_url": {
+            "type": "string",
+            "description": "LinkedIn profile URL of the person whose reactions you want"
+          },
+          "refresh": {
+            "type": "boolean",
+            "description": "Bypass the cache and re-fetch from LinkedIn (costs 5 credits). Default false: a previously-fetched result is returned free, with how long ago it was retrieved."
+          }
+        },
+        "required": [
+          "linkedin_url"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "linkedin_profile_comments",
+      "description": "Fetch the recent posts a LinkedIn person has commented on. Useful for inferring interests and conversation partners. Costs 5 credits per call.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "linkedin_url": {
+            "type": "string",
+            "description": "LinkedIn profile URL of the person whose comments you want"
+          },
+          "refresh": {
+            "type": "boolean",
+            "description": "Bypass the cache and re-fetch from LinkedIn (costs 5 credits). Default false: a previously-fetched result is returned free, with how long ago it was retrieved."
+          }
+        },
+        "required": [
+          "linkedin_url"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "linkedin_job_search",
+      "description": "Search LinkedIn job postings. Useful for tracking hiring signals at target companies. Costs 5 credits per call.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "keywords": {
+            "type": "string",
+            "description": "Job title keywords (e.g. 'staff engineer python')"
+          },
+          "companyId": {
+            "type": "string",
+            "description": "Restrict to a LinkedIn company ID (numeric, e.g. '1441'). Not a name or slug — resolve one first with linkedin_company_search, which returns each company's id."
+          },
+          "location": {
+            "type": "string",
+            "description": "Location filter (e.g. 'San Francisco, CA')"
+          },
+          "sortBy": {
+            "type": "string",
+            "enum": [
+              "relevance",
+              "date"
+            ],
+            "description": "Sort order. 'date' is the useful one for hiring signal. Default: relevance."
+          },
+          "postedLimit": {
+            "type": "string",
+            "enum": [
+              "24h",
+              "week",
+              "month"
+            ],
+            "description": "Only jobs posted within this window."
+          },
+          "refresh": {
+            "type": "boolean",
+            "description": "Bypass the cache and re-run the search live (costs 5 credits). Default false: a previously-fetched result is returned free, with how long ago it was retrieved."
+          }
+        },
+        "required": [
+          "keywords"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "linkedin_ad_search",
+      "description": "Search the LinkedIn ad library. Useful for tracking competitor ad creative and messaging. Costs 10 credits per call.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "company": {
+            "type": "string",
+            "description": "Company name or LinkedIn slug to filter ads"
+          },
+          "keywords": {
+            "type": "string",
+            "description": "Keyword filter applied to ad creative"
+          },
+          "refresh": {
+            "type": "boolean",
+            "description": "Bypass the cache and re-run the search live (costs 10 credits). Default false: a previously-fetched result is returned free, with how long ago it was retrieved."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "linkedin_people_search",
+      "description": "Search LinkedIn people. Filter by company, title, location, or free-text keywords. Costs 5 credits per call. Returns a single page of matching profiles.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "keywords": {
+            "type": "string",
+            "description": "Free-text search (e.g. 'data engineer fintech')"
+          },
+          "company": {
+            "type": "string",
+            "description": "Current company name or LinkedIn slug"
+          },
+          "title": {
+            "type": "string",
+            "description": "Current title filter (e.g. 'Director')"
+          },
+          "location": {
+            "type": "string",
+            "description": "Location filter (e.g. 'New York')"
+          },
+          "refresh": {
+            "type": "boolean",
+            "description": "Bypass the cache and re-run the search live (costs 5 credits). Default false: a previously-fetched result is returned free, with how long ago it was retrieved."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "linkedin_company_search",
+      "description": "Search LinkedIn companies. Filter by keywords, industryId, or location. Costs 5 credits per call. Returns a single page of matching companies.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "keywords": {
+            "type": "string",
+            "description": "Free-text search (e.g. 'b2b saas analytics')"
+          },
+          "industryId": {
+            "type": "string",
+            "description": "LinkedIn industry ID (numeric, comma-separated for several). Not an industry name — IDs are LinkedIn's industry codes (V2), listed at https://learn.microsoft.com/en-us/linkedin/shared/references/reference-tables/industry-codes-v2"
+          },
+          "location": {
+            "type": "string",
+            "description": "Location filter (e.g. 'San Francisco Bay Area')"
+          },
+          "refresh": {
+            "type": "boolean",
+            "description": "Bypass the cache and re-run the search live (costs 5 credits). Default false: a previously-fetched result is returned free, with how long ago it was retrieved."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "linkedin_post_reactions",
+      "description": "Fetch the people who reacted to a single LinkedIn post. Costs 5 credits per call. Engagers (with reaction kind) are persisted to the post_engagements graph so subsequent queries about who-engages-with-whom are SQL, not API calls.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "post_url": {
+            "type": "string",
+            "description": "Public LinkedIn post URL (e.g. https://www.linkedin.com/feed/update/urn:li:activity:1234)"
+          },
+          "refresh": {
+            "type": "boolean",
+            "description": "Bypass the cache and re-fetch from LinkedIn (costs 5 credits). Default false: a previously-fetched result is returned free, with how long ago it was retrieved."
+          }
+        },
+        "required": [
+          "post_url"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "linkedin_post_comments",
+      "description": "Fetch the people who commented on a single LinkedIn post (and their comment text). Costs 5 credits per call. Each comment is persisted to post_engagements with the commenter and full comment text.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "post_url": {
+            "type": "string",
+            "description": "Public LinkedIn post URL (e.g. https://www.linkedin.com/feed/update/urn:li:activity:1234)"
+          },
+          "refresh": {
+            "type": "boolean",
+            "description": "Bypass the cache and re-fetch from LinkedIn (costs 5 credits). Default false: a previously-fetched result is returned free, with how long ago it was retrieved."
+          }
+        },
+        "required": [
+          "post_url"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "find_similar_posts",
+      "description": "Find persisted posts whose embeddings are nearest to a free-text query — pgvector cosine over the local post library, no LinkedIn pull, free. Use when you have a *block of text* (a draft, a paragraph, a competitor's post) and want similar posts you've already collected. For keyword search prefer `search_posts`; for fresh LinkedIn keyword pulls use `linkedin_post_search`. Pass `profile_id` to scope to a tracked profile, `collection_id` to scope to a collection, or neither to search the entire library.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Text to find similar posts for"
+          },
+          "profile_id": {
+            "type": "string",
+            "description": "Optional tracked profile ID from list_profiles (scopes search to this profile's posts)"
+          },
+          "collection_id": {
+            "type": "string",
+            "description": "Optional post_collections.id (scopes search to this collection's members)"
+          },
+          "limit": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 50,
+            "default": 5,
+            "description": "Max results to return (1-50, default 5)"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "score_draft",
+      "description": "Predict how a draft post will perform against the user's historical data. Uses an OLS regression model with detrending, ridge regularization, and recency weighting — the same model used on the /score page. Returns a predicted engagement percentile, projected engagement range, factor breakdown, similar past posts, and improvement suggestions. Free. Pass `profile_id` to scope to a tracked profile, `collection_id` to scope to a collection, or neither to score against the user's full library.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Draft post text"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "text",
+              "image",
+              "video",
+              "document",
+              "article",
+              "poll"
+            ],
+            "default": "text",
+            "description": "Post format: text, image, video, document, article, or poll"
+          },
+          "day_of_week": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 6,
+            "description": "Planned day of week (0=Sunday, 6=Saturday, UTC)"
+          },
+          "hour": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 23,
+            "description": "Planned hour (0-23, UTC)"
+          },
+          "profile_id": {
+            "type": "string",
+            "description": "Optional tracked profile ID (scopes the model to this profile's posts)"
+          },
+          "collection_id": {
+            "type": "string",
+            "description": "Optional post_collections.id (scopes the model to this collection)"
+          }
+        },
+        "required": [
+          "text",
+          "day_of_week",
+          "hour"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "suggest_angles",
+      "description": "Given a topic, suggest distinct content angles informed by what performs well in the user's scoped data. Pulls top-performing historical posts as context and calls OpenAI to generate 5 concrete angles. Costs 5 credits per call. Pass `profile_id` to scope to a tracked profile, `collection_id` to scope to a collection, or neither to use the user's full library.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string",
+            "minLength": 2,
+            "description": "Topic or theme to generate angles for (e.g. 'onboarding new hires', 'pricing strategy')"
+          },
+          "profile_id": {
+            "type": "string",
+            "description": "Optional tracked profile ID (scopes to this profile's posts)"
+          },
+          "collection_id": {
+            "type": "string",
+            "description": "Optional post_collections.id (scopes to this collection's members)"
+          }
+        },
+        "required": [
+          "topic"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "list_segments",
+      "description": "List all audience segments for the authenticated user, with member counts. Audience segments are named groups of people (e.g. 'ICP — VPs of Marketing', 'Champions'). Free — costs 0 credits.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "smart",
+              "auto_stream"
+            ],
+            "description": "Optional filter by segment type ('manual', 'smart', or 'auto_stream')"
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "create_segment",
+      "description": "Create a new audience segment (named group of people) for the authenticated user. Set type='manual' for a hand-curated list (use add_to_segment to populate it), type='smart' with a `config` predicate (e.g. {title_contains:'VP'}) to define a dynamic segment resolved on-demand by resolve_segment, or pass `template` to pre-fill `config` from a built-in template (type defaults to 'smart'). Free — costs 0 credits.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "User-facing segment name. Optional when `template` is supplied — the template's default name is used."
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Optional longer description"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "smart",
+              "auto_stream"
+            ],
+            "description": "Segment type. 'manual' = hand-curated person list. 'smart' = dynamic predicate (requires `config`). 'auto_stream' = system-managed from a stream. Defaults to 'smart' when `template` is provided."
+          },
+          "template": {
+            "type": "string",
+            "enum": [
+              "vp_plus",
+              "c_suite",
+              "heads_of",
+              "founders",
+              "fintech_leaders",
+              "agency_owners"
+            ],
+            "description": "Optional pre-built template id. Available: 'vp_plus' (VP+ decision-makers), 'c_suite' (C-suite executives), 'heads_of' ('Head of' leaders), 'founders' (Founders & co-founders), 'fintech_leaders' (Fintech leaders), 'agency_owners' (Agency owners). Pre-fills `config` and defaults `type` to 'smart'. Explicit `config` overrides template values on collision."
+          },
+          "config": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Predicate object for smart segments. Supported keys: title_contains, company_contains, company_industry, engaged_with_topics. Required when type='smart' and no template is supplied."
+          },
+          "source_stream_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Optional stream that produced this segment (for traceability)"
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "add_to_segment",
+      "description": "Add one or more people (by person_id) to an audience segment. Existing members are silently ignored. Free — costs 0 credits.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "segment_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Target segment id from list_segments"
+          },
+          "person_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "minItems": 1,
+            "maxItems": 1000,
+            "description": "person_ids to add (1-1000 per call)"
+          }
+        },
+        "required": [
+          "segment_id",
+          "person_ids"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "remove_from_segment",
+      "description": "Remove one or more people (by person_id) from an audience segment. Missing members are silently ignored. Free — costs 0 credits.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "segment_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Target segment id from list_segments"
+          },
+          "person_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "minItems": 1,
+            "maxItems": 1000,
+            "description": "person_ids to remove (1-1000 per call)"
+          }
+        },
+        "required": [
+          "segment_id",
+          "person_ids"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "resolve_segment",
+      "description": "Resolve an audience segment into a concrete list of person_ids. For manual / auto_stream segments, returns stored members. For smart segments, evaluates the segment's `config` predicate against the people table and returns matches. Free — costs 0 credits.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "segment_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Segment id (from list_segments / create_segment)"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5000,
+            "default": 1000,
+            "description": "Max person_ids to return (default 1000)"
+          }
+        },
+        "required": [
+          "segment_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "list_segment_templates",
+      "description": "List available smart-segment templates. Pass a template id to create_segment to pre-fill its `config` predicate without crafting one from scratch. Free — costs 0 credits.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "get_alerts",
+      "description": "Return recent alerts for the authenticated user's streams. An alert is emitted whenever a scheduled stream run surfaces new items. Pass `unread_only=true` to skip alerts the user has already marked read. Free — costs 0 credits.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "unread_only": {
+            "type": "boolean",
+            "default": true,
+            "description": "Return only alerts that have not been marked read"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200,
+            "default": 50,
+            "description": "Max alerts to return (default 50)"
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "create_collection",
+      "description": "Create a new post collection for the authenticated user. Set type='manual' to hand-curate posts with add_to_collection, or type='smart' with a `config` predicate (e.g. {format:'video',min_likes:50}) to define a dynamic collection resolved on-demand by resolve_collection. Free — costs 0 credits.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "User-facing collection name"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Optional longer description"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "smart"
+            ],
+            "description": "'manual' = hand-curated post list. 'smart' = dynamic predicate (requires `config`)."
+          },
+          "config": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Predicate for smart collections. Supported keys: format, min_likes, min_comments, date_after, date_before, topic_contains, author_profile_id, profile_ids (array — posts whose profile_id is in the set; use to group several tracked profiles/streams into one live collection), source_type. Required when type='smart'."
+          }
+        },
+        "required": [
+          "name",
+          "type"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "add_to_collection",
+      "description": "Pin one or more posts (by post_id) into a collection you own — works on any collection type. On a 'manual' collection this is the only membership mechanism; on a 'smart' collection it adds the posts as extras alongside whatever the rule already matches (resolve_collection returns the union). Existing members are silently ignored. Free — costs 0 credits.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "collection_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Target collection id from list_collections"
+          },
+          "post_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "minItems": 1,
+            "maxItems": 1000,
+            "description": "post_ids to add (1-1000 per call)"
+          }
+        },
+        "required": [
+          "collection_id",
+          "post_ids"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "remove_from_collection",
+      "description": "Remove one or more posts (by post_id) from a collection. Missing members are silently ignored. Free — costs 0 credits.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "collection_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Target collection id from list_collections"
+          },
+          "post_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "minItems": 1,
+            "maxItems": 1000,
+            "description": "post_ids to remove (1-1000 per call)"
+          }
+        },
+        "required": [
+          "collection_id",
+          "post_ids"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "list_collections",
+      "description": "List all post collections for the authenticated user, with member counts. Includes manual collections, smart collections (predicate-based), and auto_stream collections (system-managed). Free — costs 0 credits.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "smart",
+              "auto_stream"
+            ],
+            "description": "Optional filter by collection type"
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "resolve_collection",
+      "description": "Resolve a post collection into a concrete list of post_ids. For manual / auto_stream collections, returns stored members. For smart collections, evaluates the collection's `config` predicate against the user's posts and returns matches. Free — costs 0 credits.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "collection_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Collection id (from list_collections / create_collection)"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5000,
+            "default": 1000,
+            "description": "Max post_ids to return (default 1000)"
+          }
+        },
+        "required": [
+          "collection_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "create_campaign",
+      "description": "Create a Constellation outreach campaign. A campaign groups target accounts, the people you care about at those accounts, and the warm connections you could approach to reach them. Free — costs 0 credits.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "User-facing campaign name"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Optional longer description"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "add_campaign_accounts",
+      "description": "Add one or more target companies to a Constellation campaign. Each account is a company you want to reach; map_constellation is then run per-account. Free — costs 0 credits.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "campaign_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Target campaign id"
+          },
+          "accounts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "company_name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                },
+                "linkedin_company_id": {
+                  "type": "string"
+                },
+                "employee_count": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0
+                },
+                "tier": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 3
+                }
+              },
+              "required": [
+                "company_name"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 500,
+            "description": "Array of companies to add (1-500 per call)"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "accounts"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "map_constellation",
+      "description": "Map the professional graph around a target company. Finds senior decision-makers at the account, pulls each target's recent posts/reactions/comments to identify engagers, then scores every connection and produces a prioritized outreach queue. Credit cost scales with targets — bounded by `max_targets`. Max spend per call is ~175 credits; actual cost is reported in the response.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "campaign_account_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "campaign_accounts.id — the company to map"
+          },
+          "title_keywords": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Title keywords to filter targets. Default: ['VP','Director','Head of','Chief']"
+          },
+          "max_targets": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20,
+            "default": 5,
+            "description": "Max targets to deep-map per account (1-20, default 5). Each target adds ~3 credits."
+          }
+        },
+        "required": [
+          "campaign_account_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "score_connections",
+      "description": "Re-score all constellation entries in a campaign and rewrite queue positions from highest to lowest composite score. Use after new engagers or targets are added. Free — costs 0 credits.\n\nNote: this tool requires a `campaign_id` because it writes back to the `constellation_entries` table. Segment- and url-list-scoped scoring is not yet supported — use `get_outreach_queue({segment_id})` or `get_outreach_queue({linkedin_urls})` for engagement-count ordering on those scopes; full composite scoring will land alongside the unified person-positions schema in a later phase.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "campaign_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Campaign id to re-score"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_outreach_queue",
+      "description": "Return a prioritized outreach queue. Provide *exactly one* of three scopes:\n• `campaign_id` — full Constellation queue with composite_score, pool, recommended_action, and prior outreach_log entries (the original campaign-scoped behavior).\n• `segment_id` — people in a saved audience segment, ranked by their engagement count against your tracked profiles' posts. No composite_score.\n• `linkedin_urls` — an ad-hoc list of LinkedIn URLs, same engagement-count ranking as segments.\nFree — costs 0 credits.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "campaign_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Campaign id (full Constellation scoring)"
+          },
+          "segment_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Audience segment id (engagement-count scoring)"
+          },
+          "linkedin_urls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 200,
+            "description": "Ad-hoc LinkedIn URL list (engagement-count scoring); max 200"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200,
+            "default": 50,
+            "description": "Max entries to return (1-200, default 50)"
+          },
+          "pool": {
+            "type": "string",
+            "enum": [
+              "coworker",
+              "engager",
+              "mutual"
+            ],
+            "description": "Optional filter: only return entries in this pool. Only meaningful for `campaign_id` scope; ignored for segment / urls."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_engagement_brief",
+      "description": "For one person, return their recent posts most relevant to what you post about — plus suggested talking points. Use before a warm comment or DM. Free — costs 0 credits.\n\nIdentify the person via *exactly one* of: `target_id` (a Constellation target — original input), `person_id` (a row in `people`), or `linkedin_url` (any form). The non-campaign forms work even when no Constellation campaign exists.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "target_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Constellation targets.id — for the original campaign-scoped flow"
+          },
+          "person_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "people.id — when you already have the canonical person row"
+          },
+          "linkedin_url": {
+            "type": "string",
+            "description": "LinkedIn profile URL (vanity or encoded form) — auto-resolved to a people row"
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "log_outcome",
+      "description": "Append an entry to the outreach log for a Constellation campaign. Use to record connection requests, acceptances, replies, or no-responses so get_campaign_stats can compute acceptance / reply rates over time. Free — costs 0 credits.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "campaign_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Campaign id"
+          },
+          "person_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "people.id — the person you outreached to"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "sent_request",
+              "accepted",
+              "replied",
+              "no_response"
+            ],
+            "description": "Outreach event: sent_request | accepted | replied | no_response"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 4000,
+            "description": "Optional free-text note"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "person_id",
+          "action"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_campaign_stats",
+      "description": "Summary stats for a Constellation campaign: target count, entry count, outreach volume, and acceptance / reply rates broken down by pool (coworker / engager / mutual) and composite-score tier. Free — costs 0 credits.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "campaign_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Campaign id"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "save_post",
+      "description": "Save a LinkedIn post to your library by its URL. Resolves the post and stores it with source_type='saved'. Optionally pins the post into any collection you own (manual or smart — pinning into a smart collection adds it as an extra alongside the rule's matches). Costs 1 credit per call. Failed lookups don't charge.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "Public LinkedIn post URL. Accepts linkedin.com/posts/... permalinks and linkedin.com/feed/update/urn:li:activity:... feed URLs."
+          },
+          "collection_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Optional collection UUID to pin the post into. Must be a collection you own — any type."
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_post_engagers_by_company",
+      "description": "Given a LinkedIn post URL or id, return the companies whose people engaged (reacted/commented), ranked by engager count. Joins through person_positions(is_current=true). Pure DB read — no LinkedIn pull, no credits charged. Engagers without a known current company are bucketed as `_unknown_company`. Optional industry_urn filter narrows to one industry.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "post_url": {
+            "type": "string",
+            "description": "Public LinkedIn post URL (e.g. https://www.linkedin.com/feed/update/urn:li:activity:1234)"
+          },
+          "post_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "posts.id UUID (use when you already know the local id)"
+          },
+          "industry_urn": {
+            "type": "string",
+            "description": "Optional urn:li:fsd_industry:<id> filter (from companies.industry_urn)"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20,
+            "description": "Max companies to return (1-100, default 20)"
+          },
+          "top_engagers_per_company": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10,
+            "default": 3,
+            "description": "How many sample engager names to attach per company row (0-10, default 3)"
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_engagement_industry_breakdown",
+      "description": "Histogram of engagers' companies grouped by industry. Pivots on companies.industry_hierarchy (e.g. 'Tech > Software Development'). Depth=1 buckets by top-level, =2 by top+mid, =3 by full hierarchy. Engagers with no current company / no industry hierarchy bucket as `_unknown`. Pure DB read — no LinkedIn pull, no credits charged.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "post_url": {
+            "type": "string",
+            "description": "Public LinkedIn post URL"
+          },
+          "post_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "posts.id UUID"
+          },
+          "depth": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3,
+            "default": 1,
+            "description": "1=top-level industry, 2=mid, 3=leaf (full hierarchy)"
+          },
+          "sample_companies_per_bucket": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10,
+            "default": 3,
+            "description": "How many sample company names to attach per industry row (0-10, default 3)"
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_alumni_engagers",
+      "description": "Given a company URL or id, return engagers (across your collected posts) who have a position at that company. Relation filter: 'coworker' = current employees, 'alumni' = any past or current position (most useful for page_type='SCHOOL' companies), 'any' = both. Pure DB read — no LinkedIn pull, no credits charged.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "company_url": {
+            "type": "string",
+            "description": "Public LinkedIn company URL"
+          },
+          "company_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "companies.id UUID"
+          },
+          "relation": {
+            "type": "string",
+            "enum": [
+              "coworker",
+              "alumni",
+              "any"
+            ],
+            "default": "any",
+            "description": "coworker = current employees only; alumni = any position (past or current); any = both"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20,
+            "description": "Max engagers to return (1-100, default 20)"
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_engager_position_history",
+      "description": "Return a person's full employment timeline from the position graph. Person must have engaged on at least one of your collected posts (engagement gate). Sorted current-first, then most-recent past by started_at desc. Pure DB read — no LinkedIn pull, no credits charged.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "person_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "people.id UUID"
+          },
+          "linkedin_url": {
+            "type": "string",
+            "description": "Person's LinkedIn profile URL"
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_target_warmth_brief",
+      "description": "For a target person, summarize all engagement evidence between them and your collected posts: posts they reacted to, posts they commented on, frequency, recency, reaction kinds, comment text snippets. Computes a v0 warmth score from engagement count, comment signal, and recency. Pure DB read — no LinkedIn pull, no credits charged.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "person_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "people.id UUID"
+          },
+          "linkedin_url": {
+            "type": "string",
+            "description": "Target's LinkedIn profile URL"
+          },
+          "days_back": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 365,
+            "default": 90,
+            "description": "How far back to look at engagements (default 90)"
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "traverse_graph_help",
+      "description": "Returns the schema, FK edges, and 5 canonical SQL examples needed to write your own SELECT against the engagement graph via traverse_graph. Also returns YOUR resolvable identities (caller_user_ids, caller_tracked_lp_ids) — substitute these into example SQL when you write your query. Pure DB read — 0 credits. Free.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "traverse_graph",
+      "description": "Executes a TS-validated SELECT-only SQL query against the engagement graph and returns rows. CALL traverse_graph_help FIRST to get schema + caller_user_ids + canonical examples. Required: SQL must start with SELECT or WITH, contain no DML/DDL keywords, and reference one of your caller_user_ids or caller_tracked_lp_ids verbatim. Cap: 1000 rows, 5s statement timeout. Pure DB read — 0 credits.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "sql": {
+            "type": "string",
+            "minLength": 10,
+            "description": "The SELECT/WITH SQL to execute"
+          }
+        },
+        "required": [
+          "sql"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_company_engagement_overlap",
+      "description": "Given two companies, return engagers across your collected posts who engaged with BOTH companies' posts. Cross-account intelligence — finds people interested in multiple targets simultaneously. Pure DB read — no LinkedIn pull, no credits charged.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "company_a_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Company A — companies.id UUID"
+          },
+          "company_a_url": {
+            "type": "string",
+            "description": "Company A — LinkedIn URL"
+          },
+          "company_b_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Company B — companies.id UUID"
+          },
+          "company_b_url": {
+            "type": "string",
+            "description": "Company B — LinkedIn URL"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20,
+            "description": "Max overlapping engagers to return (1-100, default 20)"
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_outreach_path",
+      "description": "Given a target person, find the shortest warm-intro path through your engager network. Walks coworker (shared current company) + alumni (shared past company / school) edges. Up to 3 hops. Pure DB read — no LinkedIn pull, no credits charged.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "target_person_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Target — people.id UUID"
+          },
+          "target_linkedin_url": {
+            "type": "string",
+            "description": "Target — LinkedIn URL"
+          },
+          "max_hops": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3,
+            "default": 2,
+            "description": "Max path length (1=direct, 2=one intermediate, 3=two intermediates). Default 2."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 10,
+            "description": "Max paths to return (default 10)"
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_post_set_engagers",
+      "description": "Return the consolidated, deduped people who reacted to or commented on a SET of posts — one tracked profile's posts (profile_id) or a post collection (collection_id). Fetches only posts not synced within freshness_days, and enriches (title/company via a profile lookup) only never-seen people, up to max_enrich. Costs 2 credits per post synced + 3 per person enriched; cached posts are free.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "profile_id": {
+            "type": "string",
+            "description": "Tracked profile id — engagers across this profile's stored posts"
+          },
+          "collection_id": {
+            "type": "string",
+            "description": "post_collections.id — engagers across this collection's posts"
+          },
+          "max_posts": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 25,
+            "description": "Max posts to sync this call (1-100)"
+          },
+          "max_enrich": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "default": 0,
+            "description": "Max never-seen engagers to enrich via /linkedin/profile (0-100, default 0)"
+          },
+          "freshness_days": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 365,
+            "default": 30,
+            "description": "Skip posts whose engagers were synced within this many days"
+          },
+          "force": {
+            "type": "boolean",
+            "default": false,
+            "description": "Re-sync posts even if within the freshness window"
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    }
+  ]
+}
