@@ -1,5 +1,7 @@
 # Flux LinkedIn MCP server
 
+[![Flux LinkedIn MCP MCP connector](https://glama.ai/mcp/connectors/app.fluxgraph/flux-linked-in-mcp/badges/score.svg)](https://glama.ai/mcp/connectors/app.fluxgraph/flux-linked-in-mcp)
+
 Flux ([fluxgraph.app](https://www.fluxgraph.app/features/mcp?utm_source=github&utm_medium=referral&utm_campaign=linkedin-mcp)) is a hosted MCP server for LinkedIn intelligence. Connect it to Claude, Cursor, or another MCP client, then ask about the posts and engagement of any public LinkedIn profile or company page.
 
 ```
